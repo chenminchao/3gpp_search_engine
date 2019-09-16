@@ -5,23 +5,9 @@ from elasticsearch import Elasticsearch
 
 es = Elasticsearch(['localhost'], port=9200)
 
-myFile = open("test.json", "r").read()
-data = myFile.split('},')
+data = json.load(open("/media/minchao/3gpp_search_engine/doc/f23401.json", "r"))
 
-json_str=""
-docs = {}
-i = 0
-
-for line in data:
-    startIndex = line.find('[') + 1
-    endIndex = line.find(']')
-    print(startIndex, endIndex);
-    if(startIndex != 0):
-        line = line[startIndex:] + '}'
-    elif(endIndex != -1):
-        line = line[:endIndex]
-    else:
-        line = line + '}'
-    print(line)
-    es.index(index='test', doc_type='doc', id=i, body=line)
-    i = i + 1
+for i, line in enumerate(data):
+    if len(line['desc']) < 1000000:
+        #print(len(line['desc']))
+        es.index(index='f23401', doc_type='doc', id=i, body=line)
