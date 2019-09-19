@@ -6,5 +6,5 @@ abbr_dict = [
             {"name":"CP", "desc":"Control Plane"} 
             ]
 
-with open("test.json", "w") as f:
+with open("C:\\3gpp_search_engine\\3gpp_search_engine\\doc\\test.json", "w") as f:
     json.dump(abbr_dict, f) 
