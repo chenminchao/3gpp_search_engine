@@ -1,6 +1,7 @@
 import json
 import re
 import argparse
+import os
 
 def get_title_info(catelog):
     title_level = catelog.count('.')
@@ -138,7 +139,7 @@ def main(input, output):
     def_index = 0
     abbr_index = 0
 
-    with open(input, 'r') as f:
+    with open(input, 'r', encoding='UTF-8') as f:
         content = f.readlines()
     
     for i, line in enumerate(content):
@@ -159,16 +160,18 @@ def main(input, output):
         if spec_dict['key'] == "Definitions":
             def_list = populateDefList(spec_dict)
             def_index = i
-        if spec_dict['key'] == "Abbreviations":
-            abbr_list = populateAbbrList(spec_dict)
-            abbr_index = i
+        # if spec_dict['key'] == "Abbreviations":
+        #     abbr_list = populateAbbrList(spec_dict)
+        #     abbr_index = i
 
     update_spec_list(def_index, abbr_index, def_list, abbr_list, spec_dict_list)
     save_json_file(output, spec_dict_list)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="convert txt file to json file")
-    parser.add_argument("--input", required="true")
-    parser.add_argument("--output", required="true")
-    args = parser.parse_args()
-    main(args.input, args.output)
+    filePath = 'C:\\Users\\EHOUQII\\Hackathon\\3gpp_search_engine\\doc'
+    inputFileNames = os.listdir(filePath)
+    for i,fileName in enumerate(inputFileNames):
+        if fileName.endswith('txt'):
+            input = filePath + "\\" + fileName
+            output= filePath + "\\" + fileName.split(".txt")[0] + ".json"
+            main(input, output)
