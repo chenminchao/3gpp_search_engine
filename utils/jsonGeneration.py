@@ -56,7 +56,7 @@ def get_desc_info(title_infos, content):
         desc_infos.append(''.join(content[start_num : end_num]))
     return desc_infos
 
-def create_spec_dict_list(title_infos, desc_infos):
+def create_spec_dict_list(title_infos, desc_infos, keywords):
     spec_dict_list = []
     print(len(title_infos), len(desc_infos))
     for i, title_info in enumerate(title_infos):
@@ -65,6 +65,8 @@ def create_spec_dict_list(title_infos, desc_infos):
         spec_dict['numbering'] = title_info[1]
         spec_dict['title_level'] = title_info[2]
         spec_dict['desc'] = desc_infos[i]
+        spec_dict['Keywords'] =  keywords
+
         spec_dict_list.append(spec_dict)
     return spec_dict_list
 
@@ -126,7 +128,7 @@ def populateAbbrList(abbr_input):
             print(len(line.split()))
     return abbr_def_list
 
-def update_spec_list(def_index, abbr_index, def_list, abbr_list, keywords, spec_dict_list):
+def update_spec_list(def_index, abbr_index, def_list, abbr_list, spec_dict_list):
     del spec_dict_list[def_index]
     del spec_dict_list[abbr_index-1]
 
@@ -136,8 +138,6 @@ def update_spec_list(def_index, abbr_index, def_list, abbr_list, keywords, spec_
     for abbr_line in abbr_list:
         spec_dict_list.append(abbr_line)
 
-    keywords_dic = {'Keywords':keywords}
-    spec_dict_list.append(keywords_dic)
 
 def find_keywords_in_line(line, keywords):
     ret = False
@@ -162,7 +162,25 @@ def main(input, output):
 
     with open(input, 'r', encoding='UTF-8') as f:
         content = f.readlines()
-    
+
+    findKeywords = False
+    for i, line in enumerate(content):
+        line = line.strip()
+        if (findKeywords):
+            if (line != ''):
+                keywords_list.extend(line.split(","))
+        if (find_keywords_in_line(line, "Keywords")):
+            keywords_index = i
+            findKeywords = True
+        if (find_keywords_in_line(line, "3GPP")):
+            findKeywords = False
+            break
+    keywords_list.pop()
+    keywords_list = [item for item in keywords_list if (len(str(item)) != 0)]
+    keywords = ','.join(keywords_list)
+    #    logging.getLogger().info("keywords_index={},keywords_list={}".format(keywords_index,keywords_list))
+    logging.getLogger().info("keywords={}".format(keywords))
+
     for i, line in enumerate(content):
         if(line.find('Foreword') != -1 and not line[-2].isdigit()): #23.214?
             break
@@ -175,7 +193,7 @@ def main(input, output):
             print(line)
 
     desc_infos = get_desc_info(title_infos, content)
-    spec_dict_list = create_spec_dict_list(title_infos, desc_infos)
+    spec_dict_list = create_spec_dict_list(title_infos, desc_infos, keywords)
 
     for i,spec_dict in enumerate(spec_dict_list):
         if spec_dict['key'] == "Definitions":
@@ -185,25 +203,7 @@ def main(input, output):
             abbr_list = populateAbbrList(spec_dict)
             abbr_index = i
 
-    findKeywords = False
-    for i, line in enumerate(content):
-        line = line.strip()
-        if(findKeywords):
-            if(line!=''):
-                keywords_list.extend(line.split(","))
-        if(find_keywords_in_line(line, "Keywords")):
-            keywords_index= i
-            findKeywords = True
-        if (find_keywords_in_line(line, "3GPP")):
-            findKeywords = False
-            break
-    keywords_list.pop()
-    keywords_list = [item for item in keywords_list if (len(str(item)) != 0)]
-    keywords=','.join(keywords_list)
-#    logging.getLogger().info("keywords_index={},keywords_list={}".format(keywords_index,keywords_list))
-    logging.getLogger().info("keywords={}".format(keywords))
-
-    update_spec_list(def_index, abbr_index, def_list, abbr_list, keywords, spec_dict_list)
+    update_spec_list(def_index, abbr_index, def_list, abbr_list, spec_dict_list)
     # logging.getLogger().info("def_list={}".format(def_list))
     # logging.getLogger().info("abbr_list={}".format(abbr_list))
     # logging.getLogger().info("spec_dict_list={}".format(spec_dict_list))
