@@ -2,6 +2,9 @@ import json
 import re
 import argparse
 import os
+import logging
+from logging import config
+config.fileConfig('./loggingConfig.conf')
 
 def get_title_info(catelog):
     title_level = catelog.count('.')
@@ -52,7 +55,7 @@ def get_desc_info(title_infos, content):
         #print(title_cur[1], start_num, end_num)
         desc_infos.append(''.join(content[start_num : end_num]))
     return desc_infos
-  
+
 def create_spec_dict_list(title_infos, desc_infos):
     spec_dict_list = []
     print(len(title_infos), len(desc_infos))
@@ -101,8 +104,13 @@ def populateDefList(def_input):
     return spec_def_list
 
 def populateAbbrList(abbr_input):
-    print("populateAbbrList")
-    abbr_input_start = abbr_input['desc'].split(".\n\n")[1]
+    logging.getLogger().info("Populate Abbreviation List")
+    if(len(abbr_input['desc'].split(".\n\n"))>=2):
+        abbr_input_start = abbr_input['desc'].split(".\n\n")[1]
+    elif(len(abbr_input['desc'].split(":\n\n"))>=2):
+        abbr_input_start = abbr_input['desc'].split(":\n\n")[1]
+    else:
+        abbr_input_start = abbr_input['desc'].split(".\n")[1]
     abbr_def_list = []
     for line in abbr_input_start.split('\n'):
         line = line.strip()
@@ -118,7 +126,7 @@ def populateAbbrList(abbr_input):
             print(len(line.split()))
     return abbr_def_list
 
-def update_spec_list(def_index, abbr_index, def_list, abbr_list, spec_dict_list):
+def update_spec_list(def_index, abbr_index, def_list, abbr_list, keywords, spec_dict_list):
     del spec_dict_list[def_index]
     del spec_dict_list[abbr_index-1]
 
@@ -127,6 +135,17 @@ def update_spec_list(def_index, abbr_index, def_list, abbr_list, spec_dict_list)
 
     for abbr_line in abbr_list:
         spec_dict_list.append(abbr_line)
+
+    keywords_dic = {'Keywords':keywords}
+    spec_dict_list.append(keywords_dic)
+
+def find_keywords_in_line(line, keywords):
+    ret = False
+    matchObj = re.match(r'^\b'+keywords+'$', line)
+    if matchObj:
+        logging.getLogger().debug("matchObj is {}".format(matchObj.group()))
+        ret = True
+    return ret
 
 def main(input, output):
     spec_dict_list = []
@@ -138,12 +157,14 @@ def main(input, output):
     abbr_list = []
     def_index = 0
     abbr_index = 0
+    keywords_list =[]
+    keywords_index =0
 
     with open(input, 'r', encoding='UTF-8') as f:
         content = f.readlines()
     
     for i, line in enumerate(content):
-        if(line.find('Foreword') != -1 and not line[-2].isdigit()):
+        if(line.find('Foreword') != -1 and not line[-2].isdigit()): #23.214?
             break
         
         if((len(line) > 1 and line[0].isdigit() and line[-2].isdigit()) or
@@ -160,18 +181,47 @@ def main(input, output):
         if spec_dict['key'] == "Definitions":
             def_list = populateDefList(spec_dict)
             def_index = i
-        # if spec_dict['key'] == "Abbreviations":
-        #     abbr_list = populateAbbrList(spec_dict)
-        #     abbr_index = i
+        if spec_dict['key'] == "Abbreviations":
+            abbr_list = populateAbbrList(spec_dict)
+            abbr_index = i
 
-    update_spec_list(def_index, abbr_index, def_list, abbr_list, spec_dict_list)
+    findKeywords = False
+    for i, line in enumerate(content):
+        line = line.strip()
+        if(findKeywords):
+            if(line!=''):
+                keywords_list.extend(line.split(","))
+        if(find_keywords_in_line(line, "Keywords")):
+            keywords_index= i
+            findKeywords = True
+        if (find_keywords_in_line(line, "3GPP")):
+            findKeywords = False
+            break
+    keywords_list.pop()
+    keywords_list = [item for item in keywords_list if (len(str(item)) != 0)]
+    keywords=','.join(keywords_list)
+#    logging.getLogger().info("keywords_index={},keywords_list={}".format(keywords_index,keywords_list))
+    logging.getLogger().info("keywords={}".format(keywords))
+
+    update_spec_list(def_index, abbr_index, def_list, abbr_list, keywords, spec_dict_list)
+    # logging.getLogger().info("def_list={}".format(def_list))
+    # logging.getLogger().info("abbr_list={}".format(abbr_list))
+    # logging.getLogger().info("spec_dict_list={}".format(spec_dict_list))
     save_json_file(output, spec_dict_list)
 
+
 if __name__ == "__main__":
+    logging.getLogger().info("jsonGeneration program is starting!")
+
     filePath = 'C:\\Users\\EHOUQII\\Hackathon\\3gpp_search_engine\\doc'
     inputFileNames = os.listdir(filePath)
     for i,fileName in enumerate(inputFileNames):
         if fileName.endswith('txt'):
             input = filePath + "\\" + fileName
             output= filePath + "\\" + fileName.split(".txt")[0] + ".json"
+            logging.getLogger().info("program is dealing with {}!".format(fileName))
             main(input, output)
+
+   # input = 'C:\\Users\\EHOUQII\\Hackathon\\3gpp_search_engine\\doc\\23214-f30.txt'
+   # output = 'C:\\Users\\EHOUQII\\Hackathon\\3gpp_search_engine\\doc\\23214-f30.json'
+   # main(input,output)
