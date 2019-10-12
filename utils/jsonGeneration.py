@@ -61,7 +61,7 @@ def create_spec_dict_list(title_infos, desc_infos, keywords):
     print(len(title_infos), len(desc_infos))
     for i, title_info in enumerate(title_infos):
         spec_dict = {}
-        spec_dict['key'] = title_info[0] 
+        spec_dict['key'] = title_info[0]
         spec_dict['numbering'] = title_info[1]
         spec_dict['title_level'] = title_info[2]
         spec_dict['desc'] = desc_infos[i]
@@ -100,6 +100,8 @@ def populateDefList(def_input):
         spec_defination = {}
         spec_defination['key'] = def_key
         spec_defination['desc'] = ''.join(def_input['desc'][start:end]).strip()
+        spec_defination['numbering'] = def_input["numbering"]
+        spec_defination['Keywords'] = def_input["Keywords"]
         print(spec_defination['key'])
         print(spec_defination['desc'])
         spec_def_list.append(spec_defination)
@@ -121,6 +123,8 @@ def populateAbbrList(abbr_input):
             abbr_def = {}
             abbr_def['key'] = line.split()[0]
             abbr_def['desc'] = line[len(abbr_def['key']):].strip()
+            abbr_def['numbering'] = abbr_input["numbering"]
+            abbr_def['Keywords'] = abbr_input["Keywords"]
             abbr_def_list.append(abbr_def)
             print(abbr_def['key'])
             print(abbr_def['desc'])
@@ -213,12 +217,18 @@ def main(input, output):
 if __name__ == "__main__":
     logging.getLogger().info("jsonGeneration program is starting!")
 
-    filePath = 'C:\\Users\\EHOUQII\\Hackathon\\3gpp_search_engine\\doc'
-    inputFileNames = os.listdir(filePath)
+
+    # abspath = os.getcwd()             # 获取当前路径
+    rootpath = os.path.abspath('..')    # 获取上级路径
+
+    in_Path = rootpath + "\\txt"
+    out_Path = rootpath + "\\json"
+
+    inputFileNames = os.listdir(in_Path)
     for i,fileName in enumerate(inputFileNames):
         if fileName.endswith('txt'):
-            input = filePath + "\\" + fileName
-            output= filePath + "\\" + fileName.split(".txt")[0] + ".json"
+            input = in_Path + "\\" + fileName
+            output= out_Path + "\\" + fileName.split(".txt")[0] + ".json"
             logging.getLogger().info("program is dealing with {}!".format(fileName))
             main(input, output)
 

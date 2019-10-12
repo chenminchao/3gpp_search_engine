@@ -25,7 +25,11 @@ if __name__ == "__main__":
     # parser.add_argument('--input', required='true')
     # args = parser.parse_args()
     # main(args.input)
-    filePath = 'C:\\Users\\EHOUQII\\Hackathon\\3gpp_search_engine\\doc'
+
+    rootpath = os.path.abspath('..')  # 获取上级路径
+
+    filePath = rootpath + "\\json"
+
     fileNames = os.listdir(filePath)
     for fileName in fileNames:
         if fileName.endswith('json'):
